@@ -57,7 +57,7 @@ VescDriver::VescDriver(ros::NodeHandle nh,
   servo_sub_ = nh.subscribe("commands/servo/position", 10, &VescDriver::servoCallback, this);
 
   // create a 50Hz timer, used for state machine & polling VESC telemetry
-  timer_ = nh.createTimer(ros::Duration(1.0/50.0), &VescDriver::timerCallback, this);
+  timer_ = nh.createTimer(ros::Duration(1.0/1000.0), &VescDriver::timerCallback, this);
 }
 
   /* TODO or TO-THINKABOUT LIST
