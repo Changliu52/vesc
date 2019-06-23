@@ -41,20 +41,20 @@ VescDriver::VescDriver(ros::NodeHandle nh,
   }
 
   // create vesc state (telemetry) publisher
-  state_pub_ = nh.advertise<vesc_msgs::VescStateStamped>("sensors/core", 10);
+  state_pub_ = nh.advertise<vesc_msgs::VescStateStamped>("sensors/core", 1);
 
   // since vesc state does not include the servo position, publish the commanded
   // servo position as a "sensor"
-  servo_sensor_pub_ = nh.advertise<std_msgs::Float64>("sensors/servo_position_command", 10);
+  servo_sensor_pub_ = nh.advertise<std_msgs::Float64>("sensors/servo_position_command", 1);
 
   // subscribe to motor and servo command topics
-  duty_cycle_sub_ = nh.subscribe("commands/motor/duty_cycle", 10,
+  duty_cycle_sub_ = nh.subscribe("commands/motor/duty_cycle", 1,
                                  &VescDriver::dutyCycleCallback, this);
-  current_sub_ = nh.subscribe("commands/motor/current", 10, &VescDriver::currentCallback, this);
-  brake_sub_ = nh.subscribe("commands/motor/brake", 10, &VescDriver::brakeCallback, this);
-  speed_sub_ = nh.subscribe("commands/motor/speed", 10, &VescDriver::speedCallback, this);
-  position_sub_ = nh.subscribe("commands/motor/position", 10, &VescDriver::positionCallback, this);
-  servo_sub_ = nh.subscribe("commands/servo/position", 10, &VescDriver::servoCallback, this);
+  current_sub_ = nh.subscribe("commands/motor/current", 1, &VescDriver::currentCallback, this);
+  brake_sub_ = nh.subscribe("commands/motor/brake", 1, &VescDriver::brakeCallback, this);
+  speed_sub_ = nh.subscribe("commands/motor/speed", 1, &VescDriver::speedCallback, this);
+  position_sub_ = nh.subscribe("commands/motor/position", 1, &VescDriver::positionCallback, this);
+  servo_sub_ = nh.subscribe("commands/servo/position", 1, &VescDriver::servoCallback, this);
 
   // create a 50Hz timer, used for state machine & polling VESC telemetry
   timer_ = nh.createTimer(ros::Duration(1.0/1000.0), &VescDriver::timerCallback, this);
@@ -117,7 +117,10 @@ void VescDriver::vescPacketCallback(const boost::shared_ptr<VescPacket const>& p
     state_msg->header.stamp = ros::Time::now();
     state_msg->state.voltage_input = values->v_in();
     state_msg->state.temperature_pcb = values->temp_pcb();
-    state_msg->state.current_motor = values->current_motor();
+    if (values->duty_now()>=0)
+      state_msg->state.current_motor = values->current_motor();
+    else
+      state_msg->state.current_motor = -values->current_motor();
     state_msg->state.current_input = values->current_in();
     state_msg->state.speed = values->rpm();
     state_msg->state.duty_cycle = values->duty_now();
